@@ -951,10 +951,10 @@ def _has_reached_max_failed_backup_attempts(site_name: str) -> bool:
 def get_dynamic_backup_timeout(site, with_files: bool) -> int:
 	"""Return a backup timeout in seconds based on the last successful backup's duration.
 
-	Uses a 50% buffer over the previous duration. Falls back to 4 hours if no
-	prior successful backup exists.
+	Uses a 50% buffer over the previous duration. Falls back to site.backup_timeout if no
+	prior successful backup exists, and never returns less than site.backup_timeout.
 	"""
-	MINIMUM_TIMEOUT = 4 * 3600
+	minimum_timeout = site.backup_timeout
 	BUFFER_MULTIPLIER = 1.5
 
 	last_backup_job = frappe.db.get_value(
@@ -978,6 +978,6 @@ def get_dynamic_backup_timeout(site, with_files: bool) -> int:
 		if times and times.start and times.end:
 			last_duration = (times.end - times.start).total_seconds()
 			if last_duration > 0:
-				return max(int(last_duration * BUFFER_MULTIPLIER), MINIMUM_TIMEOUT)
+				return max(int(last_duration * BUFFER_MULTIPLIER), minimum_timeout)
 
-	return MINIMUM_TIMEOUT
+	return minimum_timeout
